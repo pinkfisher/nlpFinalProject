@@ -176,30 +176,30 @@ def search_span_endpoints(start_probs, end_probs, question, passage, window=15, 
     end_probs = np.array(end_probs)
     top_spans = top_n_spans(start_probs, end_probs, question, passage, window)
 
-    # unigram filtering
+#     # unigram filtering
+#     for span in top_spans:
+#         start, end = span
+#         words = passage[start:end + 1]
+#         has_special = contains_special_char(words)
+#         if has_special:
+#             return (start, end)
+#             # kept_spans.append((start,end))
+#     return top_spans[0][0], top_spans[0][1]
+    # multigram filtering
+
+    best_overlap = set()
+    best_start = top_spans[0][0]
+    best_end = top_spans[0][1]
     for span in top_spans:
         start, end = span
         words = passage[start:end + 1]
-        has_special = contains_special_char(words)
-        if has_special:
-            return (start, end)
-            # kept_spans.append((start,end))
-    return top_spans[0][0], top_spans[0][1]
-    # multigram filtering
-
-    # best_overlap = set()
-    # best_start = top_spans[0][0]
-    # best_end = top_spans[0][1]
-    # for span in top_spans:
-    #     start, end = span
-    #     words = passage[start:end + 1]
-    #     multigrams = find_ngrams_upto(words, k)
-    #     overlap = multigrams.intersection(q_multigrams)
-    #     if len(overlap) > len(best_overlap):
-    #         best_overlap = overlap
-    #         best_start = start
-    #         best_end = end
-    # return best_start, best_end
+        multigrams = find_ngrams_upto(words, k)
+        overlap = multigrams.intersection(q_multigrams)
+        if len(overlap) > len(best_overlap):
+            best_overlap = overlap
+            best_start = start
+            best_end = end
+    return best_start, best_end
 
         
 
