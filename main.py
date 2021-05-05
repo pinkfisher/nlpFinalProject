@@ -428,11 +428,13 @@ def write_predictions(args, model, dataset):
                 start_probs = unpack(batch_start_probs[j])
                 end_probs = unpack(batch_end_probs[j])
                 # change
+#                 start_index, end_index = search_span_endpoints(
+#                         start_probs, end_probs,
+#                         qid, passage
+#                 )
                 start_index, end_index = search_span_endpoints(
-                        start_probs, end_probs,
-                        qid, passage
-                )
-
+                        start_probs, end_probs)
+                
                 #Grab predicted span.
                 pred_span = ' '.join(passage[start_index:(end_index + 1)])
 
