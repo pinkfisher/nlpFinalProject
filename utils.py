@@ -152,6 +152,10 @@ def find_ngrams_upto(input_list, n):
 def contains_special_char(input_list):
     return any([not w.strip().isalpha() for w in input_list])
 
+def stringToList(string):
+    listRes = list(string.split(" "))
+    return listRes
+
 import numpy as np
 def search_span_endpoints(start_probs, end_probs, question, passage, window=15, k=3):
     """
@@ -193,7 +197,8 @@ def search_span_endpoints(start_probs, end_probs, question, passage, window=15, 
     for span in top_spans:
         start, end = span
         delta = end - start
-        if delta < question.length:
+        questionList = stringToList(question) 
+        if delta < questionList.length:
             words = passage[start:end + 1]
         else:
             words = passage[start:start+question.length]
