@@ -155,9 +155,10 @@ def contains_special_char(input_list):
 def stringToList(string):
     listRes = list(string.split(" "))
     return listRes
+# def search_span_endpoints(start_probs, end_probs, question, passage, window=15, k=3):
 
 import numpy as np
-def search_span_endpoints(start_probs, end_probs, question, passage, window=15, k=3):
+def search_span_endpoints(start_probs, end_probs,window=15):
     """
     Finds an optimal answer span given start and end probabilities.
     Specifically, this algorithm finds the optimal start probability p_s, then
