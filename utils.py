@@ -105,118 +105,95 @@ def load_embeddings(path):
                 pass
     return embedding_map
 
+def top_n_spans(start_probs, end_probs, question, passage, window, n=4, k=2):
+    top_k_starts = start_probs.argsort()[-min(k,len(start_probs)):][::-1]
+    # top_k_ends = start_probs.argsort()[-min(k,len(end_probs)):][::-1]
 
-def search_span_endpoints(start_probs, end_probs,window=15):
-    """
-    Finds an optimal answer span given start and end probabilities.
-    Specifically, this algorithm finds the optimal start probability p_s, then
-    searches for the end probability p_e such that p_s * p_e (joint probability
-    of the answer span) is maximized. Finally, the search is locally constrained
-    to tokens lying `window` away from the optimal starting point.
-
-    Args:
-        start_probs: Distribution over start positions.
-        end_probs: Distribution over end positions.
-        window: Specifies a context sizefrom which the optimal span endpoint
-            is chosen from. This hyperparameter follows directly from the
-            DrQA paper (https://arxiv.org/abs/1704.00051).
-
-    Returns:
-        Optimal starting and ending indices for the answer span. Note that the
-        chosen end index is *inclusive*.
-    """
-
-    max_start_index = start_probs.index(max(start_probs))
-    max_end_index = -1
-    max_joint_prob = 0.
-
-    for end_index in range(len(end_probs)):
-        if max_start_index <= end_index <= max_start_index + window:
-            joint_prob = start_probs[max_start_index] * end_probs[end_index]
-            if joint_prob > max_joint_prob:
-                max_joint_prob = joint_prob
-                max_end_index = end_index
-
-    return (max_start_index, max_end_index)
-
-def top_n_spans(start_probs, end_probs, question, passage, window, n=4):
-    top_k_starts = start_probs.argsort()[-min(2,len(start_probs)):][::-1]
-
-    span_list = []
-    for idx in top_k_starts:
-        end_possibilities = end_probs[idx:]
-        top_ends = end_possibilities.argsort()[-min(n//2,len(end_possibilities)):][::-1]
-        top_ends += idx
+    span_lst = []
+    num_per_start = n//k
+    for s_idx in top_k_starts:
+        end_possibilities = end_probs[s_idx:]
+        top_ends = end_possibilities.argsort()[-min(num_per_start,len(end_possibilities)):][::-1]
+        top_ends += s_idx
         for e_idx in top_ends:
-            span_lst.append((idx,e_idx))
-    return span_list
+            span_lst.append((s_idx,e_idx))
+
+    return span_lst
+        # start_probs.argsort()[-min(k,len(start_probs)):][::-1]
+        # for end_index in range(len(end_probs)):
+        #     if max_start_index <= end_index <= max_start_index + window:
+        #         joint_prob = start_probs[max_start_index] * end_probs[end_index]
+        #         if joint_prob > max_joint_prob:
+        #             max_joint_prob = joint_prob
+        #             max_end_index = end_index
+
+        # for e_idx in top_k_ends:
+        #     if e_idx > s_ikdx
+        #     joint_prob = start_probs[s_idx] * end_probs[e_idx]
 
 
 def find_ngrams(input_list, n):
     return zip(*[input_list[i:] for i in range(n)])    
 
 
+def flatten(t):
+    flat_list = []
+    for sublist in t:
+        for item in sublist:
+            flat_list.append(item)
+    return flat_list
+
 def find_ngrams_upto(input_list, n):
     multigrams = [find_ngrams(input_list,i) for i in range(1,min(n + 1,len(input_list)))]
-    multigrams = set(multigrams)
+    multigrams = set(flatten(multigrams))
     return multigrams
 
+# used for unigram test
+def contains_special_char(input_list):
+    return any([not w.strip().isalpha() for w in input_list])
 
-def unigram_span_endpoints(start_probs,end_probs,question,passage,window=15):
+import numpy as np
+def search_span_endpoints(start_probs, end_probs, question, passage, window=15, k=3):
+    """
+    Finds an optimal answer span given start and end probabilities.
+    Specifically, this algorithm finds the optimal start probability p_s, then
+    searches for the end probability p_e such that p_s * p_e (joint probability
+    of the answer span) is maximized. Finally, the search is locally constrained
+    to tokens lying `window` away from the optimal starting point.
+    Args:
+        start_probs: Distribution over start positions.
+        end_probs: Distribution over end positions.
+        window: Specifies a context sizefrom which the optimal span endpoint
+            is chosen from. This hyperparameter follows directly from the
+            DrQA paper (https://arxiv.org/abs/1704.00051).
+    Returns:
+        Optimal starting and ending indices for the answer span. Note that the
+        chosen end index is *inclusive*.
+    """
 
-    start_probs = np.array(start_probs)
-    end_probs = np.array(end_probs)
-    top_spans = top_n_spans(start_probs,end_probs,question,passage,window)
+    # q_multigrams = find_ngrams_upto(question, k)
+    # start_probs = np.array(start_probs)
+    # end_probs = np.array(end_probs)
+    # top_spans = top_n_spans(start_probs, end_probs, question, passage, window)
 
-    #Normal
+    # unigram filtering
     for span in top_spans:
         start, end = span
         words = passage[start:end + 1]
+        has_special = contains_special_char(words)
+        if has_special:
+            return (start, end)
+            # kept_spans.append((start,end))
     return top_spans[0][0], top_spans[0][1]
+    # multigram filtering
 
-    #question length restriction
+    # best_overlap = set()
+    # best_start = top_spans[0][0]
+    # best_end = top_spans[0][1]
     # for span in top_spans:
     #     start, end = span
-    #     delta = end - start
-    #     if delta < question.length:
-    #        words = passage[start:end + 1]
-    #     else:
-    #        words = passage[start:start+question.length]
-    # return top_spans[0][0], top_spans[0][1]
-
-
-def multigram_span_endpoints(start_probs, end_probs,question,passage,window=15):
-    q_multigrams = find_ngrams_upto(question, 2)
-    start_probs = np.array(start_probs)
-    end_probs = np.array(end_probs)
-    top_spans = top_n_spans(start_probs, end_probs, question, passage, window)
-    
-    best_overlap = set()
-    best_start = top_spans[0][0]
-    best_end = top_spans[0][1]
-
-    ## Normal
-    for span in top_spans:
-        start, end = span
-        delta = end - start
-        words = passage[start:end + 1]
-        multigrams = find_ngrams_upto(words, 2)
-        overlap = multigrams.intersection(q_multigrams)
-        if len(overlap) > len(best_overlap):
-            best_overlap = overlap
-            best_start = start
-            best_end = end
-    return best_start, best_end
-
-    ##  Question length restriction
-    # for span in top_spans:
-    #     start, end = span
-    #     delta = end - start
-    #     if delta < question.length:
-    #         words = passage[start:end + 1]
-    #     else:
-    #         words = passage[start:start+question.length]
-    #     multigrams = find_ngrams_upto(words, 2)
+    #     words = passage[start:end + 1]
+    #     multigrams = find_ngrams_upto(words, k)
     #     overlap = multigrams.intersection(q_multigrams)
     #     if len(overlap) > len(best_overlap):
     #         best_overlap = overlap
@@ -224,6 +201,21 @@ def multigram_span_endpoints(start_probs, end_probs,question,passage,window=15):
     #         best_end = end
     # return best_start, best_end
 
+        
+
+
+    # max_start_index = start_probs.index(max(start_probs))
+    # max_end_index = -1
+    # max_joint_prob = 0.
+
+    # for end_index in range(len(end_probs)):
+    #     if max_start_index <= end_index <= max_start_index + window:
+    #         joint_prob = start_probs[max_start_index] * end_probs[end_index]
+    #         if joint_prob > max_joint_prob:
+    #             max_joint_prob = joint_prob
+    #             max_end_index = end_index
+
+    # return (max_start_index, max_end_index)
 
 
 
