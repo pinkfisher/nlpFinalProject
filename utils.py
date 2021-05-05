@@ -192,7 +192,13 @@ def search_span_endpoints(start_probs, end_probs, question, passage, window=15, 
     best_end = top_spans[0][1]
     for span in top_spans:
         start, end = span
-        words = passage[start:end + 1]
+        delta = end - start
+        if delta < question.length:
+            words = passage[start:end + 1]
+        else:
+            words = passage[start:start+question.length]
+
+            
         multigrams = find_ngrams_upto(words, k)
         overlap = multigrams.intersection(q_multigrams)
         if len(overlap) > len(best_overlap):
