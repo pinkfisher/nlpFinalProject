@@ -198,7 +198,7 @@ def search_span_endpoints(start_probs, end_probs, question, passage, window=15, 
         start, end = span
         delta = end - start
         questionList = stringToList(question) 
-        if delta < len(questionList):
+        if delta > len(questionList):
             words = passage[start:end + 1]
         else:
             words = passage[start:start+len(questionList)]
