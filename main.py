@@ -427,21 +427,11 @@ def write_predictions(args, model, dataset):
                 # (start, end) pair that has the highest joint probability.
                 start_probs = unpack(batch_start_probs[j])
                 end_probs = unpack(batch_end_probs[j])
-
-                #origin
-                # start_index, end_index = search_span_endpoints(
-                #         start_probs, end_probs)                
-
-
-                #unigram
-                start_index, end_index = unigram_span_endpoints(
-                        start_probs, end_probs,qid,passage
+                # change
+                start_index, end_index = search_span_endpoints(
+                        start_probs, end_probs,
+                        qid, passage
                 )
-
-                #multigram
-                # start_index, end_index = multigram_span_endpoints(
-                #         start_probs, end_probs,qid,passage
-                # )
 
                 #Grab predicted span.
                 pred_span = ' '.join(passage[start_index:(end_index + 1)])
