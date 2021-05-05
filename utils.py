@@ -196,7 +196,7 @@ def search_span_endpoints(start_probs, end_probs,window=15):
 #         if has_special:
 #             return (start, end)
             # kept_spans.append((start,end))
-    return top_spans[0][0], top_spans[0][1]
+#     return top_spans[0][0], top_spans[0][1]
     # multigram filtering
 
 #     best_overlap = set()
