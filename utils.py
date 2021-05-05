@@ -171,10 +171,10 @@ def search_span_endpoints(start_probs, end_probs, question, passage, window=15, 
         chosen end index is *inclusive*.
     """
 
-    # q_multigrams = find_ngrams_upto(question, k)
-    # start_probs = np.array(start_probs)
-    # end_probs = np.array(end_probs)
-    # top_spans = top_n_spans(start_probs, end_probs, question, passage, window)
+    q_multigrams = find_ngrams_upto(question, k)
+    start_probs = np.array(start_probs)
+    end_probs = np.array(end_probs)
+    top_spans = top_n_spans(start_probs, end_probs, question, passage, window)
 
     # unigram filtering
     for span in top_spans:
